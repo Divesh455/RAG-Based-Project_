@@ -1,0 +1,7 @@
+
+I am teaching web development in my Sigma web development course. Here are video subtitle chunks containing video title, video number, start time in seconds, end time in seconds, the text at that time :
+
+[{"title":"Introduction to CSS","number":"14","start":48.52,"end":50.16,"text":" how CSS is written."},{"title":"Introduction to CSS","number":"14","start":257.48,"end":259.48,"text":" So, what is CSS?"},{"title":"Inline & Block Elements in HTML","number":"8","start":503.0,"end":505.0,"text":" How to use CSS."}]
+---------------------------------------------------------
+where css taught
+User asked this question related to the video chunks, you have to answer in a human way (dont mention the above format, its just for you) where and how much cantent is taught in which video (in which video and at what timestamp) and guide the user to go to the particular video.also mention the starting time and ending time and don't say to user i would share chunks to you. If user asks unrelated question, tell him that you can only answer questions related to the course.
