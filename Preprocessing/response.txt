@@ -1,0 +1,5 @@
+I'd be happy to help you with your questions about Sigma web development course.
+
+You asked where and how much content is taught about CSS in the videos. The introduction of CSS is discussed in Video 14 at timestamps 139.96 seconds to 151.48 seconds, where I compared HTML to CSS as a car's body to its paint, decoration, and design. Additionally, another chunk discussing CSS is found in Video 9 starting from 407.52 seconds to 412.52 seconds.
+
+If you'd like to learn more about CSS, I recommend checking out Video 14 and Video 9 for the relevant timestamps mentioned above.

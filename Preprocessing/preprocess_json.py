@@ -19,7 +19,6 @@ def create_embedding(text_list):
 
 # a = create_embedding(["hey what up" , "how ca i help"])
 # print(a)
-
 jsons = os.listdir("newjson")
 
 my_dicts = []

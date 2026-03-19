@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAG Course Assistant</title>
+    <link rel="stylesheet" href="/static/chat.css?v=3" />
+</head>
+<body>
+    <main class="app-shell">
+        <section class="chat-shell">
+            <header class="chat-header">
+                <h1 class="chat-title">Course Assistant</h1>
+                <p class="chat-subtitle">Ask questions about your lessons and get the best timestamps.</p>
+            </header>
+
+            {% if bootstrap_error %}
+            <div class="error-banner">{{ bootstrap_error }}</div>
+            {% endif %}
+
+            <section id="chatMessages" class="chat-scroll">
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-badge">AI</div>
+                    <h2 class="empty-title">How can I help with your course?</h2>
+                    <p class="empty-copy">
+                        Ask like ChatGPT: “Where is CSS introduced?”, “Which video covers semantic tags?”, or “What should I watch first for HTML basics?”
+                    </p>
+                    <div class="sample-grid">
+                        {% for question in sample_questions %}
+                        <button
+                            type="button"
+                            class="sample-button"
+                            data-question="{{ question }}"
+                            {% if bootstrap_error %}disabled{% endif %}
+                        >
+                            {{ question }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="conversation" class="conversation hidden"></div>
+            </section>
+
+            <div class="composer-wrap">
+                <div class="composer-inner">
+                    <form id="askForm" class="composer-form">
+                        <div class="composer-row">
+                            <label for="question" class="visually-hidden">Ask a question</label>
+                            <textarea
+                                id="question"
+                                name="question"
+                                class="composer-textarea"
+                                rows="1"
+                                placeholder="Message Course Assistant"
+                                {% if bootstrap_error %}disabled{% endif %}
+                            ></textarea>
+                            <button
+                                id="submitButton"
+                                type="submit"
+                                class="composer-send"
+                                {% if bootstrap_error %}disabled{% endif %}
+                            >
+                                ↑
+                            </button>
+                        </div>
+                    </form>
+                    <p id="statusText" class="status-text"></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <template id="userMessageTemplate">
+        <article class="message-row user">
+            <div class="user-bubble message-text"></div>
+        </article>
+    </template>
+
+    <template id="assistantMessageTemplate">
+        <article class="message-row assistant">
+            <div class="assistant-avatar">AI</div>
+            <div class="assistant-content">
+                <div class="assistant-answer answer-text"></div>
+                <div class="sources hidden"></div>
+            </div>
+        </article>
+    </template>
+
+    <script>
+        const form = document.getElementById("askForm");
+        const questionInput = document.getElementById("question");
+        const submitButton = document.getElementById("submitButton");
+        const statusText = document.getElementById("statusText");
+        const chatMessages = document.getElementById("chatMessages");
+        const emptyState = document.getElementById("emptyState");
+        const conversation = document.getElementById("conversation");
+        const userTemplate = document.getElementById("userMessageTemplate");
+        const assistantTemplate = document.getElementById("assistantMessageTemplate");
+
+        function autoGrowTextarea() {
+            questionInput.style.height = "24px";
+            questionInput.style.height = `${Math.min(questionInput.scrollHeight, 208)}px`;
+        }
+
+        function scrollChatToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showConversation() {
+            emptyState.classList.add("hidden");
+            conversation.classList.remove("hidden");
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement("div");
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+        function appendUserMessage(text) {
+            showConversation();
+            const fragment = userTemplate.content.cloneNode(true);
+            fragment.querySelector(".message-text").textContent = text;
+            conversation.appendChild(fragment);
+            scrollChatToBottom();
+        }
+
+        function delay(ms) {
+            return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        async function typeText(element, text) {
+            element.textContent = "";
+
+            const textLength = text.length;
+            const chunkSize = textLength > 600 ? 4 : textLength > 300 ? 3 : 2;
+            const stepDelay = textLength > 600 ? 8 : textLength > 300 ? 12 : 18;
+
+            for (let index = 0; index < textLength; index += chunkSize) {
+                element.textContent += text.slice(index, index + chunkSize);
+                scrollChatToBottom();
+                await delay(stepDelay);
+            }
+        }
+
+        async function appendAssistantMessage(answer, sources) {
+            showConversation();
+            const fragment = assistantTemplate.content.cloneNode(true);
+            const answerElement = fragment.querySelector(".answer-text");
+            const sourcesContainer = fragment.querySelector(".sources");
+
+            conversation.appendChild(fragment);
+            scrollChatToBottom();
+
+            await typeText(answerElement, answer);
+
+            if (sources && sources.length) {
+                sourcesContainer.classList.remove("hidden");
+                sources.forEach((source) => {
+                    const card = document.createElement("div");
+                    card.className = "source-card";
+                    card.innerHTML = `
+                        <p class="source-title">Video ${escapeHtml(source.number)}: ${escapeHtml(source.title)}</p>
+                        <p class="source-time">${escapeHtml(source.start_label)} to ${escapeHtml(source.end_label)}</p>
+                        <p class="source-text">${escapeHtml(source.text)}</p>
+                    `;
+                    sourcesContainer.appendChild(card);
+                });
+                scrollChatToBottom();
+            }
+        }
+
+        async function askQuestion(question) {
+            statusText.textContent = "Thinking...";
+            submitButton.disabled = true;
+            questionInput.disabled = true;
+
+            try {
+                const response = await fetch("/api/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, top_k: 3 })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || "Could not fetch an answer.");
+                }
+
+                await appendAssistantMessage(data.answer, data.sources || []);
+                statusText.textContent = "";
+            } catch (error) {
+                await appendAssistantMessage(error.message, []);
+                statusText.textContent = "";
+            } finally {
+                submitButton.disabled = false;
+                questionInput.disabled = false;
+                questionInput.focus();
+                autoGrowTextarea();
+            }
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const question = questionInput.value.trim();
+            if (!question) {
+                statusText.textContent = "Type a question first.";
+                questionInput.focus();
+                return;
+            }
+
+            appendUserMessage(question);
+            questionInput.value = "";
+            autoGrowTextarea();
+            await askQuestion(question);
+        });
+
+        questionInput.addEventListener("input", autoGrowTextarea);
+        questionInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
+        document.querySelectorAll(".sample-button").forEach((button) => {
+            button.addEventListener("click", () => {
+                questionInput.value = button.dataset.question || "";
+                autoGrowTextarea();
+                questionInput.focus();
+            });
+        });
+
+        autoGrowTextarea();
+    </script>
+</body>
+</html>
+
+

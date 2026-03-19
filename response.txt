@@ -1,9 +1,0 @@
-Hello there! I see you're interested in learning about Flexbox. In our course, we cover Flexbox in detail, and it's actually covered in video 8 of the HTML chapter.
-
-Unfortunately, it seems like we haven't covered Flexbox yet. However, if you watch videos 8-13, which cover HTML basics, including flexing display and using flexbox for layout, you'll get a good understanding of the basics.
-
-If you're eager to learn about Flexbox, I'd recommend watching video 8, where we start with creating a new folder and opening it in VS Code. Then, we create an index.html file and talk about inline and block elements, which lays a good foundation for understanding Flexbox later on.
-
-Video 11 is also relevant as we discuss why CSS works here and how to use flexbox for layout purposes. However, video 8 provides more context and sets the stage for our discussion of Flexbox in future videos.
-
-If you're interested in learning more about Flexbox, I'd be happy to guide you through it once we cover that topic.
